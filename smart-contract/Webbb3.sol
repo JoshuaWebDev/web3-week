@@ -3,8 +3,10 @@
 pragma solidity ^0.8.21;
 
 struct Voting {
+    string urlImageCompetitor1;
     string option1;
     uint votes1;
+    string urlImageCompetitor2;
     string option2;
     uint votes2;
     uint maxDate;
@@ -16,15 +18,33 @@ struct Vote {
     uint date;
 }
 
+struct Competitor {
+    string name;
+    string urlImage;
+}
+
 contract Webbb3 {
     address owner;
     uint public currentVoting = 0;
     Voting[] public votings;
     // votes[uint][address]
     mapping(uint => mapping(address => Vote)) public votes;
+    Competitor[] public competitors;
 
     constructor() {
         owner = msg.sender;
+        addCompetitor("Peter Parker", "http://webbb3.com/images/peter-image.jpg");
+        addCompetitor("Mary Jane", "http://webbb3.com/images/mary-image.jpg");
+    }
+
+    function addCompetitor(
+        string memory name,
+        string memory urlImage
+    ) public {
+        Competitor memory newCompetitor;
+        newCompetitor.name = name;
+        newCompetitor.urlImage = urlImage;
+        competitors.push(newCompetitor);
     }
 
     function getCurrentVoting() public view returns (Voting memory) {
@@ -57,5 +77,10 @@ contract Webbb3 {
 
         if (choice == 1) votings[currentVoting].votes1++;
         else votings[currentVoting].votes2++;
+    }
+
+    function getVotingWinner(uint votingNumber) public view returns (string memory) {
+        if (votings[votingNumber].votes1 > votings[votingNumber].votes2) return competitors[0].name;
+        else return competitors[1].name;
     }
 }
