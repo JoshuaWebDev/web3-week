@@ -21,6 +21,7 @@ struct Vote {
 struct Competitor {
     string name;
     string urlImage;
+    bool eliminated;
 }
 
 contract Webbb3 {
@@ -33,8 +34,8 @@ contract Webbb3 {
 
     constructor() {
         owner = msg.sender;
-        addCompetitor("Peter Parker", "http://webbb3.com/images/peter-image.jpg");
-        addCompetitor("Mary Jane", "http://webbb3.com/images/mary-image.jpg");
+        addCompetitor("Peter Parker", "/src/img/peter-parker.jpg");
+        addCompetitor("Mary Jane", "/src/img/mary-jane.jpg");
     }
 
     function addCompetitor(
@@ -44,6 +45,7 @@ contract Webbb3 {
         Competitor memory newCompetitor;
         newCompetitor.name = name;
         newCompetitor.urlImage = urlImage;
+        newCompetitor.eliminated = false;
         competitors.push(newCompetitor);
     }
 
@@ -63,6 +65,8 @@ contract Webbb3 {
         Voting memory newVoting;
         newVoting.option1 = option1;
         newVoting.option2 = option2;
+        newVoting.urlImageCompetitor1 = competitors[0].urlImage;
+        newVoting.urlImageCompetitor2 = competitors[1].urlImage;
         newVoting.maxDate = timeToVote + block.timestamp;
         votings.push(newVoting);
     }
@@ -70,7 +74,10 @@ contract Webbb3 {
     function addVote(uint choice) public {
         require(choice == 1 || choice == 2, "Invalid Choice");
         require(getCurrentVoting().maxDate > block.timestamp, "No Open Voting");
-        require(votes[currentVoting][msg.sender].date == 0, "You already voted on this voting");
+        require(
+            votes[currentVoting][msg.sender].date == 0,
+            "You already voted on this voting"
+        );
 
         votes[currentVoting][msg.sender].choice = choice;
         votes[currentVoting][msg.sender].date = block.timestamp;
@@ -79,8 +86,15 @@ contract Webbb3 {
         else votings[currentVoting].votes2++;
     }
 
-    function getVotingWinner(uint votingNumber) public view returns (string memory) {
-        if (votings[votingNumber].votes1 > votings[votingNumber].votes2) return competitors[0].name;
-        else return competitors[1].name;
+    function getVotingWinner(uint votingId) public returns (string memory) {
+        require(votings[votingId].votes1 != votings[votingId].votes2, "No Winner");
+
+        if (votings[votingId].votes1 > votings[votingId].votes2) {
+            competitors[0].eliminated = true;
+            return competitors[0].name;
+        } else {
+            competitors[1].eliminated = false;
+            return competitors[1].name;
+        }
     }
 }
